@@ -5,7 +5,7 @@
 <script setup>
 import { ref, onMounted, watch, defineEmits } from 'vue'
 import * as echarts from 'echarts'
-import shanghaiGeoJSON from '@/assets/shanghai.json'
+import shanghaiGeoJSON from '@/assets/shanghai_real.json'
 
 const props = defineProps({
   farmData: {
@@ -66,20 +66,30 @@ const updateChart = () => {
   const option = {
     tooltip: {
       trigger: 'item',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#E5E7EB',
+      borderWidth: 1,
+      padding: 12,
+      textStyle: {
+        color: '#1F2937'
+      },
       formatter: (params) => {
         if (params.componentType === 'series' && params.seriesType === 'scatter') {
           const data = params.data
           return `
-            <div style="padding: 8px;">
-              <div style="font-weight: 600; margin-bottom: 8px; color: #1F2937;">${data.name}</div>
-              <div style="font-size: 12px; color: #6B7280;">
-                <div>🌡️ 温度: ${data.temperature}°C</div>
-                <div>💧 湿度: ${data.humidity}%</div>
-                <div>🌧️ 降雨: ${data.rainfall}mm</div>
-                <div>💨 风速: ${data.windSpeed}m/s</div>
+            <div style="padding: 4px;">
+              <div style="font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #1F2937;">${data.name}</div>
+              <div style="font-size: 12px; color: #6B7280; line-height: 1.8;">
+                <div>🌡️ 温度: <span style="font-weight: 600; color: #EF4444;">${data.temperature}°C</span></div>
+                <div>💧 湿度: <span style="font-weight: 600; color: #3B82F6;">${data.humidity}%</span></div>
+                <div>🌧️ 降雨: <span style="font-weight: 600; color: #06B6D4;">${data.rainfall}mm</span></div>
+                <div>💨 风速: <span style="font-weight: 600; color: #8B5CF6;">${data.windSpeed}m/s</span></div>
               </div>
             </div>
           `
+        }
+        if (params.componentType === 'geo') {
+          return `<div style="padding: 8px; font-weight: 600;">${params.name}</div>`
         }
         return params.name
       }
@@ -87,16 +97,32 @@ const updateChart = () => {
     geo: {
       map: 'shanghai',
       roam: true,
+      zoom: 1.1,
+      center: [121.47, 31.23],
       label: {
-        show: false
+        show: true,
+        fontSize: 11,
+        color: '#6B7280',
+        fontWeight: 'normal'
       },
       itemStyle: {
-        areaColor: '#E0F2FE',
-        borderColor: '#0EA5E9'
+        areaColor: '#F0F9FF',
+        borderColor: '#0EA5E9',
+        borderWidth: 1.5
       },
       emphasis: {
+        label: {
+          show: true,
+          fontSize: 12,
+          color: '#1F2937',
+          fontWeight: 'bold'
+        },
         itemStyle: {
-          areaColor: '#BAE6FD'
+          areaColor: '#DBEAFE',
+          borderColor: '#0284C7',
+          borderWidth: 2,
+          shadowBlur: 10,
+          shadowColor: 'rgba(14, 165, 233, 0.4)'
         }
       }
     },
@@ -107,7 +133,7 @@ const updateChart = () => {
         data: scatterData,
         symbolSize: (val) => {
           // 根据温度调整大小
-          return Math.max(15, Math.min(30, val[2]))
+          return Math.max(18, Math.min(32, val[2] * 0.8))
         },
         itemStyle: {
           color: (params) => {
@@ -117,13 +143,35 @@ const updateChart = () => {
             if (temp < 30) return '#F59E0B'
             return '#EF4444'
           },
-          shadowBlur: 10,
-          shadowColor: 'rgba(0, 0, 0, 0.3)'
+          shadowBlur: 15,
+          shadowColor: 'rgba(0, 0, 0, 0.4)',
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: true,
+          position: 'bottom',
+          fontSize: 10,
+          color: '#1F2937',
+          fontWeight: 'bold',
+          distance: 8,
+          formatter: (params) => {
+            return `${params.data.temperature}°C`
+          },
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          padding: [2, 6],
+          borderRadius: 3
         },
         emphasis: {
-          scale: 1.5,
+          scale: 1.8,
+          label: {
+            show: true,
+            fontSize: 12
+          },
           itemStyle: {
-            shadowBlur: 20
+            shadowBlur: 25,
+            shadowColor: 'rgba(0, 0, 0, 0.5)',
+            borderWidth: 3
           }
         }
       }
