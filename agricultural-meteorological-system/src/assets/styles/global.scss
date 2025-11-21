@@ -1,0 +1,73 @@
+// 全局样式变量
+$primary-color: #1E3A8A;
+$secondary-color: #10B981;
+$warning-color: #F59E0B;
+$danger-color: #EF4444;
+$bg-color: #F9FAFB;
+$card-bg: #FFFFFF;
+$text-primary: #1F2937;
+$text-secondary: #6B7280;
+$border-color: #E5E7EB;
+
+// 全局样式
+.page-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+// 卡片样式
+.data-card {
+  background: $card-bg;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// 标题样式
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: $text-primary;
+  margin-bottom: 16px;
+}
+
+// 动画
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

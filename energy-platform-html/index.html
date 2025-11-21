@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新能源虚拟电厂管理平台</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #0a1a2e;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 240px 1fr 240px;
+            grid-template-rows: 80px 1fr;
+            gap: 0;
+            padding: 0;
+        }
+
+        /* 头部 */
+        .header {
+            grid-column: 1 / -1;
+            background: linear-gradient(180deg, #0d2847 0%, #0a1a2e 100%);
+            border-bottom: 2px solid #1e5a8e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00d4ff);
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, #00d4ff, transparent);
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #00d4ff;
+            text-align: center;
+            flex: 1;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(0,212,255,0.5);
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 60px;
+        }
+
+        .header-stat {
+            text-align: center;
+        }
+
+        .header-stat-label {
+            font-size: 12px;
+            color: #5a8bb8;
+            margin-bottom: 5px;
+        }
+
+        .header-stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .header-stat-unit {
+            font-size: 14px;
+            margin-left: 3px;
+        }
+
+        /* 左侧栏 */
+        .left-panel {
+            background: rgba(10,30,50,0.5);
+            border-right: 1px solid rgba(30,90,142,0.3);
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 右侧栏 */
+        .right-panel {
+            background: rgba(10,30,50,0.5);
+            border-left: 1px solid rgba(30,90,142,0.3);
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 中间主区域 */
+        .main-content {
+            background: #0a1a2e;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+
+        /* 图表容器 */
+        .panel-box {
+            background: rgba(13,40,71,0.6);
+            border: 1px solid rgba(30,90,142,0.5);
+            border-radius: 4px;
+            padding: 15px 10px;
+            flex: 1;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            padding-left: 8px;
+            border-left: 3px solid #00d4ff;
+        }
+
+        .chart {
+            width: 100%;
+            height: calc(100% - 30px);
+        }
+
+        /* 中间地图区域 */
+        .map-section {
+            flex: 1;
+            display: grid;
+            grid-template-rows: 1fr 320px;
+            gap: 0;
+        }
+
+        .map-container {
+            position: relative;
+            padding: 20px;
+        }
+
+        #chinaMap {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 底部图表区域 */
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 280px 1fr 340px;
+            gap: 15px;
+            padding: 15px 20px 20px 20px;
+            background: rgba(10,26,46,0.8);
+            border-top: 1px solid rgba(30,90,142,0.3);
+        }
+
+        /* 储能状态 */
+        .storage-status {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .storage-item {
+            background: rgba(13,40,71,0.6);
+            border: 1px solid rgba(30,90,142,0.5);
+            border-radius: 4px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .storage-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .storage-icon.battery { background: linear-gradient(135deg, #00ff00, #00aa00); }
+        .storage-icon.water { background: linear-gradient(135deg, #00d4ff, #0088ff); }
+        .storage-icon.thermal { background: linear-gradient(135deg, #ff6600, #ff3300); }
+
+        .storage-info {
+            flex: 1;
+        }
+
+        .storage-percent {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .storage-detail {
+            font-size: 11px;
+            color: #5a8bb8;
+            margin-top: 3px;
+        }
+
+        /* 地图图例 */
+        .map-legend {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(13,40,71,0.9);
+            border: 1px solid rgba(30,90,142,0.5);
+            border-radius: 4px;
+            padding: 15px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-icon {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <div class="header-stats">
+                <div class="header-stat">
+                    <div class="header-stat-label">总装机容量：</div>
+                    <div class="header-stat-value">2.5<span class="header-stat-unit">GW</span></div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-label">实时发电量：</div>
+                    <div class="header-stat-value">1.8<span class="header-stat-unit">GW</span></div>
+                </div>
+            </div>
+            <h1>新能源虚拟电厂管理平台</h1>
+            <div class="header-stats">
+                <div class="header-stat">
+                    <div class="header-stat-label">碳减排：</div>
+                    <div class="header-stat-value">1,200<span class="header-stat-unit">吨</span></div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-label">运行效率：</div>
+                    <div class="header-stat-value">94.5<span class="header-stat-unit">%</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 左侧面板 -->
+        <div class="left-panel">
+            <div class="panel-box">
+                <div class="panel-title">实时发电量</div>
+                <div style="padding: 10px 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                        <span style="font-size: 18px;">☀️</span>
+                        <span style="color: #5a8bb8; font-size: 13px;">太阳</span>
+                    </div>
+                    <div id="solarChart" style="width: 100%; height: 140px;"></div>
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <div style="display: flex; align-items: center; gap: 8px; padding-left: 8px; margin-bottom: 15px;">
+                    <span style="font-size: 18px;">🌀</span>
+                    <span style="color: #5a8bb8; font-size: 13px;">风能</span>
+                </div>
+                <div id="windChart" style="width: 100%; height: 140px;"></div>
+            </div>
+
+            <div class="panel-box">
+                <div style="display: flex; align-items: center; gap: 8px; padding-left: 8px; margin-bottom: 15px;">
+                    <span style="font-size: 18px;">💧</span>
+                    <span style="color: #5a8bb8; font-size: 13px;">水力</span>
+                </div>
+                <div id="waterChart" style="width: 100%; height: 140px;"></div>
+            </div>
+        </div>
+
+        <!-- 中间主区域 -->
+        <div class="main-content">
+            <div class="map-section">
+                <div class="map-container">
+                    <div id="chinaMap"></div>
+                    <div class="map-legend">
+                        <div class="legend-item">
+                            <span class="legend-icon">☀️</span>
+                            <span style="color: #ffcc00;">太阳分布</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-icon">🌀</span>
+                            <span style="color: #00ff66;">风能分布</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-icon">💧</span>
+                            <span style="color: #00d4ff;">水力分布</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-section">
+                    <div class="panel-box">
+                        <div class="panel-title">能源结构</div>
+                        <div id="energyPie" class="chart"></div>
+                    </div>
+
+                    <div class="panel-box">
+                        <div class="panel-title">历史运行数据</div>
+                        <div id="historicalBar" class="chart"></div>
+                    </div>
+
+                    <div class="panel-box">
+                        <div class="panel-title">储能状态</div>
+                        <div class="storage-status">
+                            <div class="storage-item">
+                                <div class="storage-icon battery">🔋</div>
+                                <div class="storage-info">
+                                    <div class="storage-percent">100%</div>
+                                    <div class="storage-detail">电池</div>
+                                    <div class="storage-detail">充电：2% 容量：2.3 GW</div>
+                                </div>
+                            </div>
+                            <div class="storage-item">
+                                <div class="storage-icon water">💧</div>
+                                <div class="storage-info">
+                                    <div class="storage-percent">100%</div>
+                                    <div class="storage-detail">泵干水东</div>
+                                    <div class="storage-detail">充电：70% 容量：1000吨</div>
+                                </div>
+                            </div>
+                            <div class="storage-item">
+                                <div class="storage-icon thermal">🔥</div>
+                                <div class="storage-info">
+                                    <div class="storage-percent">100%</div>
+                                    <div class="storage-detail">热氢储存</div>
+                                    <div class="storage-detail">充电：200% 容量：2000吨</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧面板 -->
+        <div class="right-panel">
+            <div class="panel-box">
+                <div class="panel-title">储能状态</div>
+                <div style="padding: 10px 0;">
+                    <div style="text-align: center; margin-bottom: 10px;">
+                        <div style="font-size: 20px; font-weight: bold; color: #00d4ff;">100%</div>
+                        <div style="font-size: 11px; color: #5a8bb8; margin-top: 5px;">
+                            <div>🔋 电池</div>
+                            <div style="margin-top: 3px;">充电：2%</div>
+                            <div style="margin-top: 3px;">容量：2.3 GW</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <div style="text-align: center; padding: 10px 0;">
+                    <div style="font-size: 20px; font-weight: bold; color: #00d4ff;">100%</div>
+                    <div style="font-size: 11px; color: #5a8bb8; margin-top: 5px;">
+                        <div>💧 泵干水东</div>
+                        <div style="margin-top: 3px;">充电：70%</div>
+                        <div style="margin-top: 3px;">容量：1000吨</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <div style="text-align: center; padding: 10px 0;">
+                    <div style="font-size: 20px; font-weight: bold; color: #00d4ff;">100%</div>
+                    <div style="font-size: 11px; color: #5a8bb8; margin-top: 5px;">
+                        <div>🔥 热氢储存</div>
+                        <div style="margin-top: 3px;">充电：200%</div>
+                        <div style="margin-top: 3px;">容量：2000吨</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-box" style="flex: 1.5;">
+                <div class="panel-title">效率分析</div>
+                <div id="efficiencyGauge" style="width: 100%; height: calc(100% - 30px);"></div>
+            </div>
+
+            <div class="panel-box">
+                <div class="panel-title">天气预报</div>
+                <div style="display: flex; justify-content: space-around; padding: 20px 5px; align-items: center;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 36px;">☀️</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 36px;">☁️</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 36px;">🌬️</div>
+                    </div>
+                </div>
+                <div style="text-align: center; font-size: 11px; color: #5a8bb8;">未来48小时</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 太阳能发电图表
+        const solarChart = echarts.init(document.getElementById('solarChart'));
+        solarChart.setOption({
+            backgroundColor: 'transparent',
+            grid: { left: 25, right: 15, top: 10, bottom: 20 },
+            xAxis: {
+                type: 'category',
+                data: ['0', '3', '6', '9', '12', '15', '18', '21', '24'],
+                axisLine: { lineStyle: { color: '#1e5a8e' } },
+                axisLabel: { color: '#5a8bb8', fontSize: 10 }
+            },
+            yAxis: {
+                type: 'value',
+                max: 200,
+                splitNumber: 4,
+                axisLine: { show: false },
+                splitLine: { lineStyle: { color: 'rgba(30,90,142,0.2)' } },
+                axisLabel: { color: '#5a8bb8', fontSize: 10 }
+            },
+            series: [{
+                data: [0, 0, 20, 80, 150, 180, 150, 80, 20, 0],
+                type: 'line',
+                smooth: true,
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(255,200,0,0.5)' },
+                        { offset: 1, color: 'rgba(255,200,0,0.05)' }
+                    ])
+                },
+                lineStyle: { color: '#d4a017', width: 2 },
+                symbol: 'none'
+            }]
+        });
+
+        // 风能发电图表
+        const windChart = echarts.init(document.getElementById('windChart'));
+        windChart.setOption({
+            backgroundColor: 'transparent',
+            grid: { left: 25, right: 15, top: 10, bottom: 20 },
+            xAxis: {
+                type: 'category',
+                data: ['0', '3', '6', '9', '12', '15', '18', '21', '24'],
+                axisLine: { lineStyle: { color: '#1e5a8e' } },
+                axisLabel: { color: '#5a8bb8', fontSize: 10 }
+            },
+            yAxis: {
+                type: 'value',
+                max: 200,
+                splitNumber: 4,
+                axisLine: { show: false },
+                splitLine: { lineStyle: { color: 'rgba(30,90,142,0.2)' } },
+                axisLabel: { color: '#5a8bb8', fontSize: 10 }
+            },
+            series: [{
+                data: [120, 100, 140, 120, 160, 140, 130, 150, 120],
+                type: 'line',
+                smooth: true,
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(0,255,100,0.5)' },
+                        { offset: 1, color: 'rgba(0,255,100,0.05)' }
+                    ])
+                },
+                lineStyle: { color: '#00cc66', width: 2 },
+                symbol: 'none'
+            }]
+        });
+
+        // 水力发电图表
+        const waterChart = echarts.init(document.getElementById('waterChart'));
+        waterChart.setOption({
+            backgroundColor: 'transparent',
+            grid: { left: 25, right: 15, top: 10, bottom: 20 },
+            xAxis: {
+                type: 'category',
+                data: ['0', '3', '6', '9', '12', '15', '18', '21', '24'],
+                axisLine: { lineStyle: { color: '#1e5a8e' } },
+                axisLabel: { color: '#5a8bb8', fontSize: 10 }
+            },
+            yAxis: {
+                type: 'value',
+                max: 200,
+                splitNumber: 4,
+                axisLine: { show: false },
+                splitLine: { lineStyle: { color: 'rgba(30,90,142,0.2)' } },
+                axisLabel: { color: '#5a8bb8', fontSize: 10 }
+            },
+            series: [{
+                data: [80, 90, 100, 120, 140, 160, 180, 150, 100],
+                type: 'line',
+                smooth: true,
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(0,212,255,0.5)' },
+                        { offset: 1, color: 'rgba(0,212,255,0.05)' }
+                    ])
+                },
+                lineStyle: { color: '#00a8cc', width: 2 },
+                symbol: 'none'
+            }]
+        });
+
+        // 上海地图 - 使用ECharts GeoJSON数据
+        fetch('https://geo.datav.aliyun.com/areas_v3/bound/310000_full.json')
+            .then(response => response.json())
+            .then(geoJson => {
+                echarts.registerMap('shanghai', geoJson);
+                
+                const chinaMap = echarts.init(document.getElementById('chinaMap'));
+                
+                // 模拟上海地区电站分布数据
+                const solarStations = [
+                    {name: '浦东新区', value: [121.5, 31.2], symbolSize: 25},
+                    {name: '闵行区', value: [121.38, 31.11], symbolSize: 20},
+                    {name: '松江区', value: [121.23, 31.03], symbolSize: 18},
+                    {name: '嘉定区', value: [121.27, 31.37], symbolSize: 22}
+                ];
+
+                const windStations = [
+                    {name: '崇明区', value: [121.4, 31.62], symbolSize: 22},
+                    {name: '奉贤区', value: [121.47, 30.92], symbolSize: 20},
+                    {name: '金山区', value: [121.34, 30.74], symbolSize: 18}
+                ];
+
+                const hydroStations = [
+                    {name: '青浦区', value: [121.12, 31.15], symbolSize: 20},
+                    {name: '宝山区', value: [121.49, 31.40], symbolSize: 18},
+                    {name: '普陀区', value: [121.40, 31.25], symbolSize: 16}
+                ];
+
+                chinaMap.setOption({
+                    backgroundColor: 'transparent',
+                    geo: {
+                        map: 'shanghai',
+                        roam: false,
+                        aspectScale: 0.85,
+                        layoutCenter: ['50%', '50%'],
+                        layoutSize: '85%',
+                        itemStyle: {
+                            areaColor: 'rgba(13,40,71,0.4)',
+                            borderColor: '#1e5a8e',
+                            borderWidth: 1.5
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                areaColor: 'rgba(30,90,142,0.6)'
+                            },
+                            label: {
+                                show: true,
+                                color: '#00d4ff',
+                                fontSize: 12
+                            }
+                        }
+                    },
+                    series: [
+                        // 太阳能电站
+                        {
+                            type: 'scatter',
+                            coordinateSystem: 'geo',
+                            data: solarStations,
+                            symbol: 'circle',
+                            symbolSize: function(val) { return val[2]; },
+                            itemStyle: {
+                                color: '#ffcc00',
+                                shadowBlur: 15,
+                                shadowColor: 'rgba(255,204,0,0.8)'
+                            },
+                            zlevel: 2
+                        },
+                        // 太阳能涟漪效果
+                        {
+                            type: 'effectScatter',
+                            coordinateSystem: 'geo',
+                            data: solarStations.slice(0, 2),
+                            symbolSize: function(val) { return val[2] + 5; },
+                            rippleEffect: {
+                                brushType: 'stroke',
+                                scale: 2.5,
+                                period: 4
+                            },
+                            itemStyle: {
+                                color: '#ffcc00',
+                                shadowBlur: 10,
+                                shadowColor: '#ffcc00'
+                            },
+                            zlevel: 3
+                        },
+                        // 风能电站
+                        {
+                            type: 'scatter',
+                            coordinateSystem: 'geo',
+                            data: windStations,
+                            symbol: 'triangle',
+                            symbolSize: function(val) { return val[2]; },
+                            itemStyle: {
+                                color: '#00ff66',
+                                shadowBlur: 15,
+                                shadowColor: 'rgba(0,255,102,0.8)'
+                            },
+                            zlevel: 2
+                        },
+                        // 风能涟漪效果
+                        {
+                            type: 'effectScatter',
+                            coordinateSystem: 'geo',
+                            data: windStations.slice(0, 2),
+                            symbolSize: function(val) { return val[2] + 5; },
+                            rippleEffect: {
+                                brushType: 'stroke',
+                                scale: 2.5,
+                                period: 4
+                            },
+                            itemStyle: {
+                                color: '#00ff66',
+                                shadowBlur: 10,
+                                shadowColor: '#00ff66'
+                            },
+                            zlevel: 3
+                        },
+                        // 水电站
+                        {
+                            type: 'scatter',
+                            coordinateSystem: 'geo',
+                            data: hydroStations,
+                            symbol: 'diamond',
+                            symbolSize: function(val) { return val[2]; },
+                            itemStyle: {
+                                color: '#00d4ff',
+                                shadowBlur: 15,
+                                shadowColor: 'rgba(0,212,255,0.8)'
+                            },
+                            zlevel: 2
+                        },
+                        // 水电涟漪效果
+                        {
+                            type: 'effectScatter',
+                            coordinateSystem: 'geo',
+                            data: hydroStations.slice(0, 2),
+                            symbolSize: function(val) { return val[2] + 5; },
+                            rippleEffect: {
+                                brushType: 'stroke',
+                                scale: 2.5,
+                                period: 4
+                            },
+                            itemStyle: {
+                                color: '#00d4ff',
+                                shadowBlur: 10,
+                                shadowColor: '#00d4ff'
+                            },
+                            zlevel: 3
+                        }
+                    ]
+                });
+
+                window.addEventListener('resize', () => chinaMap.resize());
+            });
+
+        // 能源结构饼图
+        const energyPie = echarts.init(document.getElementById('energyPie'));
+        energyPie.setOption({
+            backgroundColor: 'transparent',
+            legend: {
+                orient: 'horizontal',
+                bottom: 5,
+                textStyle: { color: '#5a8bb8', fontSize: 11 },
+                itemWidth: 12,
+                itemHeight: 12
+            },
+            series: [{
+                type: 'pie',
+                radius: ['45%', '75%'],
+                center: ['50%', '45%'],
+                avoidLabelOverlap: false,
+                label: {
+                    show: false
+                },
+                labelLine: { show: false },
+                data: [
+                    { value: 20.5, name: '光源', itemStyle: { color: '#d4a017' } },
+                    { value: 15.3, name: '能源', itemStyle: { color: '#00cc66' } },
+                    { value: 22.7, name: '风水', itemStyle: { color: '#00a8cc' } },
+                    { value: 41.5, name: '水水源', itemStyle: { color: '#1e5a8e' } }
+                ]
+            }]
+        });
+
+        // 历史运行数据
+        const historicalBar = echarts.init(document.getElementById('historicalBar'));
+        historicalBar.setOption({
+            backgroundColor: 'transparent',
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' }
+            },
+            legend: {
+                data: ['光能', '风能', '水能'],
+                top: 5,
+                textStyle: { color: '#5a8bb8', fontSize: 11 },
+                itemWidth: 12,
+                itemHeight: 12
+            },
+            grid: { left: 40, right: 20, top: 35, bottom: 30 },
+            xAxis: {
+                type: 'category',
+                data: ['2024年1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '10月', '10月', '11月', '12月', '2025年1月'],
+                axisLine: { lineStyle: { color: '#1e5a8e' } },
+                axisLabel: { 
+                    color: '#5a8bb8', 
+                    fontSize: 9,
+                    interval: 0,
+                    rotate: 30
+                }
+            },
+            yAxis: {
+                type: 'value',
+                max: 200,
+                axisLine: { show: false },
+                splitLine: { lineStyle: { color: 'rgba(30,90,142,0.2)' } },
+                axisLabel: { color: '#5a8bb8', fontSize: 10 }
+            },
+            series: [
+                {
+                    name: '光能',
+                    type: 'bar',
+                    barWidth: '25%',
+                    data: [120, 140, 130, 145, 135, 150, 155, 160, 165, 170, 175, 180, 185],
+                    itemStyle: { color: '#d4a017' }
+                },
+                {
+                    name: '风能',
+                    type: 'bar',
+                    barWidth: '25%',
+                    data: [110, 125, 115, 130, 120, 135, 140, 145, 150, 155, 160, 165, 170],
+                    itemStyle: { color: '#00cc66' }
+                },
+                {
+                    name: '水能',
+                    type: 'bar',
+                    barWidth: '25%',
+                    data: [100, 115, 105, 120, 110, 125, 130, 135, 140, 145, 150, 155, 160],
+                    itemStyle: { color: '#00a8cc' }
+                }
+            ]
+        });
+
+        // 效率分析仪表盘
+        const efficiencyGauge = echarts.init(document.getElementById('efficiencyGauge'));
+        efficiencyGauge.setOption({
+            backgroundColor: 'transparent',
+            series: [{
+                type: 'gauge',
+                startAngle: 200,
+                endAngle: -20,
+                min: 0,
+                max: 100,
+                splitNumber: 5,
+                radius: '85%',
+                center: ['50%', '60%'],
+                axisLine: {
+                    lineStyle: {
+                        width: 15,
+                        color: [
+                            [0.3, '#ff4444'],
+                            [0.7, '#ffcc00'],
+                            [1, '#00ff66']
+                        ]
+                    }
+                },
+                pointer: {
+                    length: '60%',
+                    width: 5,
+                    itemStyle: { color: '#00d4ff' }
+                },
+                axisTick: {
+                    distance: -18,
+                    length: 5,
+                    lineStyle: { color: '#fff', width: 1 }
+                },
+                splitLine: {
+                    distance: -20,
+                    length: 10,
+                    lineStyle: { color: '#fff', width: 2 }
+                },
+                axisLabel: {
+                    distance: -35,
+                    color: '#5a8bb8',
+                    fontSize: 11
+                },
+                detail: {
+                    valueAnimation: true,
+                    fontSize: 24,
+                    fontWeight: 'bold',
+                    offsetCenter: [0, '80%'],
+                    color: '#00d4ff',
+                    formatter: '{value}%'
+                },
+                title: {
+                    show: true,
+                    offsetCenter: [0, '100%'],
+                    fontSize: 12,
+                    color: '#5a8bb8'
+                },
+                data: [{ value: 97.3, name: '效率分析' }]
+            }]
+        });
+
+        // 响应式
+        window.addEventListener('resize', () => {
+            solarChart.resize();
+            windChart.resize();
+            waterChart.resize();
+            energyPie.resize();
+            historicalBar.resize();
+            efficiencyGauge.resize();
+        });
+    </script>
+</body>
+</html>

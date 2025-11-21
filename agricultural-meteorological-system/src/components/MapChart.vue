@@ -1,0 +1,143 @@
+<template>
+  <div ref="chartRef" class="map-chart"></div>
+</template>
+
+<script setup>
+import { ref, onMounted, watch, defineEmits } from 'vue'
+import * as echarts from 'echarts'
+import shanghaiGeoJSON from '@/assets/shanghai.json'
+
+const props = defineProps({
+  farmData: {
+    type: Array,
+    default: () => []
+  }
+})
+
+const emit = defineEmits(['farm-click'])
+
+const chartRef = ref(null)
+let chartInstance = null
+
+onMounted(() => {
+  initChart()
+})
+
+watch(() => props.farmData, () => {
+  updateChart()
+}, { deep: true })
+
+const initChart = () => {
+  if (!chartRef.value) return
+
+  chartInstance = echarts.init(chartRef.value)
+  
+  // 注册上海地图
+  echarts.registerMap('shanghai', shanghaiGeoJSON)
+  
+  updateChart()
+
+  // 点击事件
+  chartInstance.on('click', (params) => {
+    if (params.componentType === 'series' && params.seriesType === 'scatter') {
+      emit('farm-click', params.data.farmId)
+    }
+  })
+
+  // 响应式
+  window.addEventListener('resize', () => {
+    chartInstance?.resize()
+  })
+}
+
+const updateChart = () => {
+  if (!chartInstance || !props.farmData.length) return
+
+  const scatterData = props.farmData.map(farm => ({
+    name: farm.name,
+    value: [...farm.location, farm.temperature],
+    farmId: farm.id,
+    temperature: farm.temperature,
+    humidity: farm.humidity,
+    rainfall: farm.rainfall,
+    windSpeed: farm.windSpeed
+  }))
+
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: (params) => {
+        if (params.componentType === 'series' && params.seriesType === 'scatter') {
+          const data = params.data
+          return `
+            <div style="padding: 8px;">
+              <div style="font-weight: 600; margin-bottom: 8px; color: #1F2937;">${data.name}</div>
+              <div style="font-size: 12px; color: #6B7280;">
+                <div>🌡️ 温度: ${data.temperature}°C</div>
+                <div>💧 湿度: ${data.humidity}%</div>
+                <div>🌧️ 降雨: ${data.rainfall}mm</div>
+                <div>💨 风速: ${data.windSpeed}m/s</div>
+              </div>
+            </div>
+          `
+        }
+        return params.name
+      }
+    },
+    geo: {
+      map: 'shanghai',
+      roam: true,
+      label: {
+        show: false
+      },
+      itemStyle: {
+        areaColor: '#E0F2FE',
+        borderColor: '#0EA5E9'
+      },
+      emphasis: {
+        itemStyle: {
+          areaColor: '#BAE6FD'
+        }
+      }
+    },
+    series: [
+      {
+        type: 'scatter',
+        coordinateSystem: 'geo',
+        data: scatterData,
+        symbolSize: (val) => {
+          // 根据温度调整大小
+          return Math.max(15, Math.min(30, val[2]))
+        },
+        itemStyle: {
+          color: (params) => {
+            const temp = params.data.temperature
+            if (temp < 15) return '#3B82F6'
+            if (temp < 25) return '#10B981'
+            if (temp < 30) return '#F59E0B'
+            return '#EF4444'
+          },
+          shadowBlur: 10,
+          shadowColor: 'rgba(0, 0, 0, 0.3)'
+        },
+        emphasis: {
+          scale: 1.5,
+          itemStyle: {
+            shadowBlur: 20
+          }
+        }
+      }
+    ]
+  }
+
+  chartInstance.setOption(option)
+}
+</script>
+
+<style lang="scss" scoped>
+.map-chart {
+  width: 100%;
+  flex: 1;
+  min-height: 500px;
+}
+</style>
