@@ -9,7 +9,7 @@ import {
 import {Text, Surface, ActivityIndicator} from 'react-native-paper';
 import WebLinearGradient from '@components/WebLinearGradient';
 const LinearGradient = WebLinearGradient;
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from '@components/MaterialCommunityIcons';
 import {useVPNStore} from '@store/vpnStore';
 import {useAuthStore} from '@store/authStore';
 import {ConnectionStatus} from '@types/index';

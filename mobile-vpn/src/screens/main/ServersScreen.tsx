@@ -8,7 +8,7 @@ import {
 import {Text, Surface, Searchbar, Chip} from 'react-native-paper';
 import WebLinearGradient from '@components/WebLinearGradient';
 const LinearGradient = WebLinearGradient;
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from '@components/MaterialCommunityIcons';
 import {useVPNStore} from '@store/vpnStore';
 import {Server, VPNProtocol} from '@types/index';
 import {colors} from '../../theme/colors';

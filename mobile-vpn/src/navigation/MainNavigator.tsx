@@ -5,7 +5,7 @@ import HomeScreen from '@screens/main/HomeScreen';
 import ServersScreen from '@screens/main/ServersScreen';
 import SubscriptionsScreen from '@screens/main/SubscriptionsScreen';
 import ProfileScreen from '@screens/main/ProfileScreen';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from '@components/MaterialCommunityIcons';
 import {colors} from '../theme/colors';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();

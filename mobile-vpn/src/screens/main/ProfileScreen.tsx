@@ -3,7 +3,7 @@ import {View, StyleSheet, ScrollView, TouchableOpacity, Alert} from 'react-nativ
 import {Text, Surface, Switch, Divider} from 'react-native-paper';
 import WebLinearGradient from '@components/WebLinearGradient';
 const LinearGradient = WebLinearGradient;
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from '@components/MaterialCommunityIcons';
 import {useAuthStore} from '@store/authStore';
 import {SubscriptionType} from '@types/index';
 import {colors} from '../../theme/colors';
